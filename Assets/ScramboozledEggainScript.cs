@@ -44,7 +44,7 @@ public class ScramboozledEggainScript : MonoBehaviour
     private bool _isEggMoving;
     private List<int> _eggPresses = new List<int>();
 
-    private static readonly string[] _wordList = new string[] { "BASTED", "BOILED", "BOXING", "CARTON", "DUMPTY", "FRENCH", "FRYPAN", "HUEVOS", "HUMPTY", "NORMAN", "PASTEL", "ROYALE", "SARDOU", "TAJINE", "TRIFLE", "QUICHE", "WHITES", "ZYGOTE" };
+    private static readonly string[] _wordList = new string[] { "BASTED", "BOILED", "BOXING", "CARTON", "DUMPTY", "FRENCH", "FRYPAN", "HUEVOS", "HUMPTY", "PASTEL", "ROYALE", "SARDOU", "SUNDAY", "TAJINE", "TRIFLE", "QUICHE", "WHITES", "ZYGOTE" };
     private string[] _selectedWords = new string[4];
     private int[] _eggColors = new int[6];
     private int[] _solution = new int[6];
@@ -187,7 +187,7 @@ public class ScramboozledEggainScript : MonoBehaviour
         var elapsed = 0f;
         while (elapsed < duration)
         {
-            FakeEggObj.transform.localPosition = new Vector3(Mathf.Lerp(0f, 0.5f, elapsed / duration), Mathf.Lerp(0.0562f, 0.1f, elapsed / duration), Mathf.Lerp(-0.065f, -0.5f, elapsed / duration));
+            FakeEggObj.transform.localPosition = new Vector3(Mathf.Lerp(0f, 0.5f, elapsed / duration), Mathf.Lerp(0.075f, 0.1f, elapsed / duration), Mathf.Lerp(-0.085f, -0.5f, elapsed / duration));
             yield return null;
             elapsed += Time.deltaTime;
         }
