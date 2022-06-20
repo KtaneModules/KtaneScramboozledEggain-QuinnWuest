@@ -33,6 +33,7 @@ public class ScramboozledEggainScript : MonoBehaviour
     public Material[] LEDMats;
     public TextMesh CongratsText;
     public GameObject[] PressLeds;
+    public KMSelectable[] LedSels;
 
     private int _moduleId;
     private static int _moduleIdCounter = 1;
@@ -57,6 +58,9 @@ public class ScramboozledEggainScript : MonoBehaviour
     private int _snDigit;
     private int _currentDigit;
 
+    private bool _isCycling = true;
+    private Coroutine _cycleDisplays;
+
     private void Start()
     {
         _moduleId = _moduleIdCounter++;
@@ -65,6 +69,8 @@ public class ScramboozledEggainScript : MonoBehaviour
 
         for (int i = 0; i < EggSels.Length; i++)
             EggSels[i].OnInteract += EggSelPress(i);
+        for (int i = 0; i < LedSels.Length; i++)
+            LedSels[i].OnInteract += LedSelPress(i);
 
         _isBigEgg = true;
         CongratsText.text = "";
@@ -108,6 +114,35 @@ public class ScramboozledEggainScript : MonoBehaviour
         };
     }
 
+    private KMSelectable.OnInteractHandler LedSelPress(int i)
+    {
+        return delegate ()
+        {
+            if (_isCycling)
+            {
+                if (i != 2)
+                    return false;
+                if (_cycleDisplays != null)
+                    StopCoroutine(_cycleDisplays);
+                _isCycling = false;
+            }
+            if (i == 2)
+                return false;
+            if (i == 1)
+            {
+                _cycleDisplays = StartCoroutine(CycleDisplays());
+                _isCycling = true;
+                return false;
+            }
+            if (i == 0)
+                _cycleIx = (_cycleIx + 3) % 4;
+            if (i == 3)
+                _cycleIx = (_cycleIx + 1) % 4;
+            SetScreens(_cycleIx);
+            return false;
+        };
+    }
+
     private void SetPressLEDs()
     {
         for (int i = 0; i < 6; i++)
@@ -141,23 +176,30 @@ public class ScramboozledEggainScript : MonoBehaviour
     {
         while (!_moduleSolved && !_isSolving)
         {
-            for (int i = 0; i < 6; i++)
-            {
-                Eggzleglyphs[_wordScrambles[_cycleIx][i] * 2].GetComponent<MeshRenderer>().material.mainTexture = EggzleglyphTextures[_alphabet.IndexOf(_selectedWords[_cycleIx][i]) % 5];
-                Eggzleglyphs[_wordScrambles[_cycleIx][i] * 2 + 1].GetComponent<MeshRenderer>().material.mainTexture = EggzleglyphTextures[_alphabet.IndexOf(_selectedWords[_cycleIx][i]) / 5];
-            }
-            for (int i = 0; i < 4; i++)
-            {
-                if (i == _cycleIx)
-                    LEDObjs[i].GetComponent<MeshRenderer>().material = LEDMats[1];
-                else
-                    LEDObjs[i].GetComponent<MeshRenderer>().material = LEDMats[0];
-            }
+            SetScreens(_cycleIx);
             yield return new WaitForSeconds(1f);
+            if (!_isCycling)
+                yield break;
             _cycleIx = (_cycleIx + 1) % 4;
         }
     }
-    
+
+    private void SetScreens(int ix)
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            Eggzleglyphs[_wordScrambles[ix][i] * 2].GetComponent<MeshRenderer>().material.mainTexture = EggzleglyphTextures[_alphabet.IndexOf(_selectedWords[ix][i]) % 5];
+            Eggzleglyphs[_wordScrambles[ix][i] * 2 + 1].GetComponent<MeshRenderer>().material.mainTexture = EggzleglyphTextures[_alphabet.IndexOf(_selectedWords[ix][i]) / 5];
+        }
+        for (int i = 0; i < 4; i++)
+        {
+            if (i == ix)
+                LEDObjs[i].GetComponent<MeshRenderer>().material = LEDMats[1];
+            else
+                LEDObjs[i].GetComponent<MeshRenderer>().material = LEDMats[0];
+        }
+    }
+
     private bool FakeEggPress()
     {
         if (!_isEggMoving)
@@ -182,7 +224,7 @@ public class ScramboozledEggainScript : MonoBehaviour
 
     private IEnumerator FlyEgg()
     {
-        StartCoroutine(CycleDisplays());
+        _cycleDisplays = StartCoroutine(CycleDisplays());
         var duration = 2f;
         var elapsed = 0f;
         while (elapsed < duration)
@@ -238,7 +280,7 @@ public class ScramboozledEggainScript : MonoBehaviour
     }
 
 #pragma warning disable 0414
-    private readonly string TwitchHelpMessage = "!{0} egg 4 [Press the egg when the last digit of the timer is a 4] | !{0} press 123456 [Presses buttons 1 2 3 4 5 6 in order. Must have 6 numbers in the command.]";
+    private readonly string TwitchHelpMessage = "!{0} egg 4 [Press the egg when the last digit of the timer is a 4] | !{0} press 123456 [Presses buttons 1 2 3 4 5 6 in order. Must have 6 numbers in the command.] | !{0} led l [Press the left LED. LEDs are L, ML, MR, R.]";
 #pragma warning restore 0414
 
     private IEnumerator ProcessTwitchCommand(string command)
@@ -279,8 +321,23 @@ public class ScramboozledEggainScript : MonoBehaviour
             FakeEggSel.OnInteract();
             yield break;
         }
+        if (!command.StartsWith("led "))
+            yield break;
+        command = command.Substring(4);
+        var ixs = new[] { "l", "ml", "mr", "r" };
+        int ix = Array.IndexOf(ixs, command);
+        if (ix == -1)
+            yield break;
+        if (!_isScramboozledEggain)
+        {
+            yield return "sendtochaterror You have not pressed the big egg yet!";
+            yield break;
+        }
+        yield return null;
+        LedSels[ix].OnInteract();
+        yield break;
     }
-    
+
     private IEnumerator TwitchHandleForcedSolve()
     {
         if (_isBigEgg)
