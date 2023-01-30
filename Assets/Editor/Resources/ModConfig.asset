@@ -14,10 +14,9 @@ MonoBehaviour:
   id: ScramboozledEggainModule
   title: Scramboozled Eggain
   author: Quinn Wuest
-  description: 'When a yolk goes too far...
-
-
-    Made by Quinn Wuest'
+  description: "When a yolk goes too far...\r\n\r\nMade by Quinn Wuest\r\n\r\n[url=https://ktane.timwi.de/HTML/Scramboozled%20Eggain.html]Manual
+    HTML[/url]\r\n[url=https://ktane.timwi.de/PDF/Scramboozled%20Eggain.pdf]Manual
+    PDF[/url]"
   version: 1.0
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 4e32f63e043a0f947a3ddd9abf100329, type: 3}

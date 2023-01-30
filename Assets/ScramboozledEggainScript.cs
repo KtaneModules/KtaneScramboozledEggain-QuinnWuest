@@ -299,6 +299,8 @@ public class ScramboozledEggainScript : MonoBehaviour
                 yield break;
             }
             yield return null;
+            yield return "strike";
+            yield return "solve";
             _eggPresses = new List<int>();
             for (int i = 0; i < 6; i++)
             {
