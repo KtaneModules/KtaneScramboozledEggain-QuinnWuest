@@ -108,8 +108,7 @@ public class ScramboozledEggainScript : MonoBehaviour
                 return false;
             _eggPresses.Add(i);
             SetPressLEDs();
-            if (_eggPresses.Count == 6)
-                CheckAnswer();
+            CheckAnswer();
             return false;
         };
     }
@@ -156,18 +155,22 @@ public class ScramboozledEggainScript : MonoBehaviour
 
     private void CheckAnswer()
     {
-        if (_eggPresses.SequenceEqual(_solution))
+        if (_eggPresses[_eggPresses.Count - 1] != _solution[_eggPresses.Count - 1])
         {
-            _isSolving = true;
-            StartCoroutine(SolveAnimation());
-            Debug.LogFormat("[Scramboozled Eggain #{0}] Pressed {1}. Module solved!", _moduleId, _eggPresses.Select(j => j + 1).Join(" "));
+            Module.HandleStrike();
+            Debug.LogFormat("[Scramboozled Eggain #{0}] Pressed {1} instead of {2}. Strike.", _moduleId, _eggPresses[_eggPresses.Count - 1] + 1, _solution[_eggPresses.Count - 1] + 1);
+            _eggPresses = new List<int>();
         }
         else
         {
-            Module.HandleStrike();
-            Debug.LogFormat("[Scramboozled Eggain #{0}] Pressed {1} instead of {2}. Strike.", _moduleId, _eggPresses.Select(j => j + 1).Join(" "), _solution.Select(j => j + 1).Join(" "));
+            Debug.LogFormat("[Scramboozled Eggain #{0}] Correctly pressed {1}.",  _moduleId, _solution[_eggPresses.Count - 1] + 1);
+            if (_eggPresses.Count == 6)
+            {
+                _isSolving = true;
+                StartCoroutine(SolveAnimation());
+                Debug.LogFormat("[Scramboozled Eggain #{0}] Pressed {1}. Module solved!", _moduleId, _eggPresses.Select(i => i+1).Join(" "));
+            }
         }
-        _eggPresses = new List<int>();
         if (!_isSolving)
             SetPressLEDs();
     }
@@ -285,7 +288,7 @@ public class ScramboozledEggainScript : MonoBehaviour
 
     private IEnumerator ProcessTwitchCommand(string command)
     {
-        var m = Regex.Match(command, @"^\s*press\s+([1-6]{6})\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        Match m = Regex.Match(command, @"^\s*(?:(press|submit)\s+)(?<d>[123456 ,;]+)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         if (m.Success)
         {
             if (!_isScramboozledEggain)
@@ -293,21 +296,18 @@ public class ScramboozledEggainScript : MonoBehaviour
                 yield return "sendtochaterror You have not pressed the big egg yet!";
                 yield break;
             }
-            if (m.Groups[1].Value.Distinct().Count() != 6)
-            {
-                yield return "sendtochaterror Expected six different button presses.";
+            int[] presses = m.Groups["d"].Value.Where(i => i != ' ' && i != ',' && i != ';').Select(i => i - '0').ToArray();
+            if (presses.Length == 0)
                 yield break;
-            }
             yield return null;
             yield return "strike";
             yield return "solve";
-            _eggPresses = new List<int>();
-            for (int i = 0; i < 6; i++)
+            Debug.Log(presses.Join(" "));
+            for (int j = 0; j < presses.Length; j++)
             {
-                EggSels[m.Groups[1].Value[i] - '1'].OnInteract();
+                EggSels[presses[j] - 1].OnInteract();
                 yield return new WaitForSeconds(0.1f);
             }
-            yield break;
         }
         m = Regex.Match(command, @"^\s*egg\s+([0-9])\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         if (m.Success)
