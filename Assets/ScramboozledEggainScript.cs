@@ -288,6 +288,7 @@ public class ScramboozledEggainScript : MonoBehaviour
 
     private IEnumerator ProcessTwitchCommand(string command)
     {
+        command = command.ToLowerInvariant();
         Match m = Regex.Match(command, @"^\s*(?:(press|submit)\s+)(?<d>[123456 ,;]+)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         if (m.Success)
         {
